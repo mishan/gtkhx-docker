@@ -29,12 +29,10 @@ After the first run, make the packages **public** (or grant readers) on
 GHCR so they can be pulled without auth — new packages are private by
 default.
 
-## Using in GtkHx's CI
+## Use in GtkHx's CI
 
 GtkHx's CI pulls the `gtkhx-ci-base` toolchain instead of
-building/installing on every run. The exact
-GtkHx-side changes are in
-[docs/consuming-in-gtkhx-ci.md](docs/consuming-in-gtkhx-ci.md).
+building/installing on every run.
 
 ## Keeping in sync with GtkHx
 
