@@ -49,6 +49,7 @@ RUN dnf -y install \
         glycin-loaders \
         git rust cargo \
         mold \
+        libasan libubsan clang-tools-extra \
         libnice-gstreamer1 \
         libsoup3-devel \
         gstreamer1-devel \
