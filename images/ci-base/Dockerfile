@@ -24,7 +24,12 @@
 
 FROM fedora:43
 
-# One layer, cache cleaned, so the published image stays lean.
+# One layer, cache cleaned, and installed with tsflags=nodocs (skip man
+# pages + /usr/share/doc) so the published image stays lean — it's pulled
+# onto every CI runner, where it shares a ~14 GB disk with the cargo target
+# dir and the test containers. (The Android/.NET/GHC/CodeQL cruft that used
+# to fill that disk lives on the ubuntu-latest runner host, not in this
+# image; the GtkHx repo's tests.yml reclaims it before the build.)
 #
 #   meson/ninja/gcc/pkgconf ....... build system + compiler
 #   gtk4 / libadwaita / glib / gir  toolkit
@@ -37,7 +42,7 @@ FROM fedora:43
 #   git / rust / cargo ............ VCS + Rust workspace
 #   mold .......................... fast linker (GtkHx CI links with `mold -run`)
 #   libnice-gstreamer1 / libsoup3 / gstreamer1-* .. voice (WebRTC) stack
-RUN dnf -y install \
+RUN dnf -y install --setopt=tsflags=nodocs \
         meson ninja-build pkgconf-pkg-config gcc \
         gtk4-devel libadwaita-devel \
         glib2-devel gobject-introspection-devel \
