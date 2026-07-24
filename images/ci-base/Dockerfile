@@ -28,7 +28,8 @@ FROM fedora:43
 #
 #   meson/ninja/gcc/pkgconf ....... build system + compiler
 #   gtk4 / libadwaita / glib / gir  toolkit
-#   gsound ........................ chat alert playback
+#   alsa-lib ...................... chat alert playback (cpal backend behind
+#                                   the hxsound Rust crate; replaced gsound)
 #   gettext ....................... i18n build
 #   desktop-file-utils / appstream  validate-desktop / validate-metainfo tests
 #   libpanel ...................... UI dep
@@ -41,7 +42,7 @@ RUN dnf -y install \
         meson ninja-build pkgconf-pkg-config gcc \
         gtk4-devel libadwaita-devel \
         glib2-devel gobject-introspection-devel \
-        gsound-devel \
+        alsa-lib-devel \
         gettext-devel \
         desktop-file-utils appstream \
         libpanel-devel \
