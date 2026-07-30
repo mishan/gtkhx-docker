@@ -34,7 +34,8 @@ FROM fedora:43
 #   libpanel ...................... UI dep
 #   libseccomp / lcms2 / fontconfig misc deps (glycin sandbox, colour, fonts)
 #   glycin-loaders ................ hx-image-decode decode tests (2+ loaders)
-#   git / rust / cargo ............ VCS + Rust workspace
+#   git / rust / cargo ......... VCS + Rust workspace
+#   rustfmt / clippy ............. lint (cargo fmt --check, cargo clippy)
 #   mold .......................... fast linker (GtkHx CI links with `mold -run`)
 #   libnice-gstreamer1 / libsoup3 / gstreamer1-* .. voice (WebRTC) stack
 RUN dnf -y install \
@@ -47,7 +48,7 @@ RUN dnf -y install \
         libpanel-devel \
         libseccomp-devel lcms2-devel fontconfig-devel \
         glycin-loaders \
-        git rust cargo \
+        git rust cargo rustfmt clippy \
         mold \
         libasan libubsan clang-tools-extra \
         libnice-gstreamer1 \
