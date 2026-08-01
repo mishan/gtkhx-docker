@@ -42,7 +42,22 @@ FROM fedora:43
 #   glycin-loaders ................ hx-image-decode decode tests (2+ loaders)
 #   git / rust / cargo ............ VCS + Rust workspace
 #   mold .......................... fast linker (GtkHx CI links with `mold -run`)
+#   xorg-x11-server-Xvfb .......... virtual display for the widget tests; see below
+#   xorg-x11-xauth ................ xvfb-run shells out to it for the cookie
 #   libnice-gstreamer1 / libsoup3 / gstreamer1-* .. voice (WebRTC) stack
+#
+# On Xvfb: GTK 4 has no headless backend, and gtk4-rs asserts an initialised
+# GTK inside the generated class_init, so any Rust test that constructs a
+# widget needs a real GdkDisplay. Without one those tests don't fail — they
+# return early and report success, which is how a reference-cycle leak in the
+# chat view stayed invisible for the whole life of the widget while CI showed
+# green. GtkHx's tests.yml runs the Rust workspace suite under `xvfb-run -a`
+# with GDK_BACKEND=x11; this is the package that makes that work.
+#
+# `xvfb-run` lives in xorg-x11-server-Xvfb alongside the server binary itself
+# (it moved there from xorg-x11-server-utils some releases back). It is a shell
+# wrapper that generates an auth cookie via xauth, hence the second package —
+# it is not pulled in as a dependency of the first.
 RUN dnf -y install --setopt=tsflags=nodocs \
         meson ninja-build pkgconf-pkg-config gcc \
         gtk4-devel libadwaita-devel \
@@ -55,6 +70,7 @@ RUN dnf -y install --setopt=tsflags=nodocs \
         glycin-loaders \
         git rust cargo \
         mold \
+        xorg-x11-server-Xvfb xorg-x11-xauth \
         libasan libubsan clang-tools-extra \
         libnice-gstreamer1 \
         libsoup3-devel \
@@ -74,3 +90,14 @@ RUN gcc --version | head -1 \
     && rustc --version \
     && cargo --version \
     && mold --version | head -1
+
+# Prove the virtual display actually works, rather than just that the binaries
+# landed. This exercises the whole path GtkHx CI depends on — xvfb-run picking
+# a free server number, minting a cookie through xauth, starting Xvfb, running
+# a command against it — so a package split, a rename, or a missing xauth fails
+# here, at publish time, with an obvious cause. The alternative is a GtkHx CI
+# run failing somewhere inside `cargo test` with a GTK assertion.
+#
+# (No version line for Xvfb above: it has no `-version` flag, and the X server
+# it reports is `xorg-x11-server-common`'s anyway.)
+RUN xvfb-run -a sh -c 'test -n "$DISPLAY"'
