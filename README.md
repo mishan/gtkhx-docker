@@ -36,6 +36,16 @@ building/installing on every run.
 
 ## Keeping in sync with GtkHx
 
+One dep is a *test* dep rather than a build dep, and is the easiest thing here
+to mistake for cruft: **Xvfb**. GTK 4 has no headless backend, so GtkHx's Rust
+widget tests need a real display — and without one they don't fail, they return
+early and report success. That is how a reference-cycle leak in the chat view
+stayed invisible for the whole life of the widget while CI showed green.
+GtkHx's `tests.yml` runs the workspace suite under `xvfb-run -a`, so dropping
+the package would not break the image build; it would quietly stop those tests
+from running. The functional check at the end of the Dockerfile exists to make
+that failure loud instead.
+
 `images/ci-base/Dockerfile`'s package list mirrors GtkHx's CI build step —
 if GtkHx grows a build dep, add it there and re-publish. The server
 images are independent of GtkHx's port matrices (the overlay pins those).
