@@ -46,6 +46,9 @@ FROM fedora:43
 #   xorg-x11-server-Xvfb .......... virtual display for the widget tests; see below
 #   xorg-x11-xauth ................ xvfb-run shells out to it for the cookie
 #   libnice-gstreamer1 / libsoup3 / gstreamer1-* .. voice (WebRTC) stack
+#   pipewire / wireplumber / pipewire-pulseaudio / pipewire-gstreamer /
+#   pipewire-utils / dbus-daemon / dbus-tools .. the private audio session
+#                                   tests run in; see below
 #
 # On Xvfb: GTK 4 has no headless backend, and gtk4-rs asserts an initialised
 # GTK inside the generated class_init, so any Rust test that constructs a
@@ -59,6 +62,14 @@ FROM fedora:43
 # (it moved there from xorg-x11-server-utils some releases back). It is a shell
 # wrapper that generates an auth cookie via xauth, hence the second package —
 # it is not pulled in as a dependency of the first.
+#
+# On PipeWire: GtkHx's tests run under its tools/isolated-run.sh, which gives
+# each run its own D-Bus session bus and its own PipeWire + WirePlumber (plus
+# pipewire-pulse, for GStreamer's pulse elements) with a null sink and source,
+# so the voice tests have a real audio server to play into without one on the
+# host. pipewire-utils is for wpctl, which the wrapper waits on; dbus-tools
+# carries dbus-run-session. Nothing here starts at build time: the wrapper
+# starts and stops the whole session per run.
 RUN dnf -y install --setopt=tsflags=nodocs \
         meson ninja-build pkgconf-pkg-config gcc \
         gtk4-devel libadwaita-devel \
@@ -80,6 +91,8 @@ RUN dnf -y install --setopt=tsflags=nodocs \
         gstreamer1-plugins-bad-free-devel \
         gstreamer1-plugins-bad-free-extras \
         gstreamer1-plugins-good \
+        pipewire wireplumber pipewire-pulseaudio pipewire-gstreamer \
+        pipewire-utils dbus-daemon dbus-tools \
     && dnf clean all \
     && rm -rf /var/cache/dnf
 
@@ -90,7 +103,10 @@ RUN gcc --version | head -1 \
     && meson --version \
     && rustc --version \
     && cargo --version \
-    && mold --version | head -1
+    && mold --version | head -1 \
+    && pipewire --version | tail -1 \
+    && wireplumber --version | tail -1 \
+    && command -v pipewire-pulse wpctl dbus-run-session
 
 # Prove the virtual display actually works, rather than just that the binaries
 # landed. This exercises the whole path GtkHx CI depends on — xvfb-run picking
